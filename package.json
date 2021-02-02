@@ -1,0 +1,11 @@
+{
+  "name": "jobbing",
+  "version": "1.0.0",
+  "description": "Service for fake stock trading.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Maxim Vashkevich",
+  "license": "ISC"
+}
