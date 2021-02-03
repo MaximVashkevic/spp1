@@ -118,3 +118,5 @@ dist
 .idea
 # Dependency directory
 bower_components
+# db
+*.sqlite
