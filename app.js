@@ -13,11 +13,13 @@ const fetch = require('node-fetch')
 class App extends EventEmitter {
     db = null
     iex = null
+    config = null
 
-    constructor(connection, iexClient) {
+    constructor(connection, iexClient, config) {
         super()
         this.db = connection
         this.iex = iexClient
+        this.config = config
     }
 
     static async start(config) {
@@ -39,7 +41,8 @@ class App extends EventEmitter {
                 version: 'stable'
             })
 
-            const app = new App(sequelize, iex)
+            const app = new App(sequelize, iex, config)
+
             return app
         })()
     }
@@ -57,8 +60,8 @@ class App extends EventEmitter {
             return callback(Error('User already exists'))
         }
 
-        const passwordHash = await bcrypt.hash(userParams.password, config.saltLength)
-        const user = User.create({ login: userParams.login, password: passwordHash, amount: config.initialAmount })
+        const passwordHash = await bcrypt.hash(userParams.password, this.config.saltLength)
+        const user = User.create({ login: userParams.login, password: passwordHash, amount: this.config.initialAmount })
         callback(null, user)
     }
 
@@ -143,7 +146,26 @@ class App extends EventEmitter {
             callback(null, result)
         }
         catch (err) {
-            return callback(Error('Server error'))
+            callback(Error('Server error'))
+        }
+    }
+
+    async history(params, callback)
+    {
+        if (typeof (params?.user) === 'undefined')
+        {
+            return callback(Error('Invalid params'))
+        }
+
+        const Transaction = this.db.models.Transaction
+        const Symbol = this.db.models.Symbol
+        try{
+            const res = await Transaction.findAll({where: {userId: params.user.id}, include: [Symbol]})
+            callback(null, res)
+        }
+        catch (err)
+        {
+            callback(err)
         }
     }
 }

@@ -42,6 +42,9 @@ class Transaction extends Model {
             createdAt: 'time',
             updatedAt: false
         })
+
+        Transaction.belongsTo(User, {foreignKey: 'userId'})
+        Transaction.belongsTo(Symbol, {foreignKey: 'symbolId'})
     }
 }
 
