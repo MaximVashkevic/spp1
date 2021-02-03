@@ -11,6 +11,8 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "node-iex-cloud": "^2.0.31",
     "sequelize": "^6.5.0",
     "sqlite3": "^5.0.1",
     "validatorjs": "^3.22.1"

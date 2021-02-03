@@ -1,18 +1,23 @@
-const { Sequelize } = require('sequelize')
+const { Sequelize, Transaction } = require('sequelize')
 const SymbolModel = require('./models/Symbol')
 const UserModel = require('./models/User')
 const TransactionModel = require('./models/Transaction');
 const EventEmitter = require('events')
 const bcrypt = require('bcryptjs');
-const config = require('./config');
 const LoginValidator = require('./validators/loginValidator')
 const RegisterValidator = require('./validators/registerValidator')
+const BuyValidator = require('./validators/buyValidator')
+const { IEXCloudClient } = require('node-iex-cloud')
+const fetch = require('node-fetch')
+
 class App extends EventEmitter {
     db = null
+    iex = null
 
-    constructor(connection) {
+    constructor(connection, iexClient) {
         super()
-        this.db = connection;
+        this.db = connection
+        this.iex = iexClient
     }
 
     static async start(config) {
@@ -27,7 +32,14 @@ class App extends EventEmitter {
             } catch (error) {
                 return this.emit('error', error);
             }
-            let app = new App(sequelize)
+
+            const iex = new IEXCloudClient(fetch, {
+                sandbox: true,
+                publishable: config.iexPublicKey,
+                version: 'stable'
+            })
+
+            const app = new App(sequelize, iex)
             return app
         })()
     }
@@ -57,7 +69,6 @@ class App extends EventEmitter {
             return callback(Error('Invalid login or password'))
         }
 
-        bcrypt.hash()
         const user = await User.findOne({ where: { login: userParams.login } })
         if (user) {
             const passwordMathces = await bcrypt.compare(userParams.password, user.password)
@@ -68,17 +79,73 @@ class App extends EventEmitter {
         }
         callback(Error('Invalid login or password'))
     }
+
+    async lookup(symbol)
+    {
+        try {
+            return await this.iex
+            .symbol(symbol)
+            .price()
+        }
+        catch {
+            throw Error('Invalid symbol')
+        }
+    }
+
+    async buy(shareParams, callback) {
+        const db = this.db
+        const TransactionModel = db.models.Transaction
+        const SymbolModel = db.models.Symbol
+        const buyValidator = BuyValidator(shareParams)
+        if (!buyValidator.passes()) {
+            return callback(Error('Invalid symbol or amount of shares'))
+        }
+
+        let symbolPrice
+        try {
+            symbolPrice = await this.lookup(shareParams.symbol)
+        }
+        catch (err) {
+            return callback(err)
+        }
+
+        let total = symbolPrice * shareParams.amount
+
+        if (shareParams.user.amount - total < 0) {
+            return callback(Error('Not enough money'))
+        }
+
+        try {
+            const result = await db.transaction(async (t) => {
+                const [symbol, _] = await SymbolModel.findOrCreate({
+                    where: { symbol: shareParams.symbol },
+                    defaults: { symbol: shareParams.symbol },
+                    transaction: t
+                })
+
+                await TransactionModel.create({
+                    userId: shareParams.user.id,
+                    symbolId: symbol.id,
+                    shares: shareParams.amount,
+                    price: symbolPrice
+                }, { transaction: t })
+
+                shareParams.user.amount -= total
+                try
+                {
+                    await shareParams.user.save({ transaction: t })
+                }
+                catch (err)
+                {
+                    return callback(Error('Server error'))
+                }
+            })
+            callback(null, result)
+        }
+        catch (err) {
+            return callback(Error('Server error'))
+        }
+    }
 }
 
-(async () => {
-
-    const emitter = await App.start(config)
-
-    const login = '123456'
-    const pwd = '654321'
-
-    // await emitter.register({ login: login, password: pwd, password_confirmation: pwd },
-    //     (err, res) => { if (!err) { console.log(res) } else { console.error(err); } })
-    await emitter.logIn({ login: login, password: pwd },
-        (err, res) => { if (!err) { console.log('logged ' + res) } else { console.error(err); } })
-})()
+module.exports = App
