@@ -9,6 +9,7 @@ const RegisterValidator = require('./validators/registerValidator')
 const BuyValidator = require('./validators/buyValidator')
 const { IEXCloudClient } = require('node-iex-cloud')
 const fetch = require('node-fetch')
+const ValidationError = require('./validationError')
 
 class App extends EventEmitter {
     db = null
@@ -51,13 +52,20 @@ class App extends EventEmitter {
         const User = this.db.models.User
         const registerValidator = RegisterValidator(userParams)
         if (!registerValidator.passes()) {
+            let errorStr = [];
             const errors = registerValidator.errors.all()
-            return callback(Error('Invalid data'))
+            for (const errorField of Object.values(errors)) {
+                for (const error of errorField) {
+                    errorStr.push(error);
+                }
+            }
+
+            return callback(new ValidationError(errorStr))
         }
 
         const existingUser = await User.findOne({ where: { login: userParams.login } })
         if (existingUser) {
-            return callback(Error('User already exists'))
+            return callback(new Error('User already exists'))
         }
 
         const passwordHash = await bcrypt.hash(userParams.password, this.config.saltLength)
@@ -69,7 +77,7 @@ class App extends EventEmitter {
         const User = this.db.models.User
         const loginValidator = LoginValidator(userParams)
         if (!loginValidator.passes()) {
-            return callback(Error('Invalid login or password'))
+            return callback(new Error('Invalid login or password'))
         }
 
         const user = await User.findOne({ where: { login: userParams.login } })
@@ -80,18 +88,17 @@ class App extends EventEmitter {
                 return
             }
         }
-        callback(Error('Invalid login or password'))
+        callback(new Error('Invalid login or password'))
     }
 
-    async lookup(symbol)
-    {
+    async lookup(symbol) {
         try {
             return await this.iex
-            .symbol(symbol)
-            .price()
+                .symbol(symbol)
+                .price()
         }
         catch {
-            throw Error('Invalid symbol')
+            throw new Error('Invalid symbol')
         }
     }
 
@@ -101,7 +108,7 @@ class App extends EventEmitter {
         const SymbolModel = db.models.Symbol
         const buyValidator = BuyValidator(shareParams)
         if (!buyValidator.passes()) {
-            return callback(Error('Invalid symbol or amount of shares'))
+            return callback(new Error('Invalid symbol or amount of shares'))
         }
 
         let symbolPrice
@@ -115,7 +122,7 @@ class App extends EventEmitter {
         let total = symbolPrice * shareParams.amount
 
         if (shareParams.user.amount - total < 0) {
-            return callback(Error('Not enough money'))
+            return callback(new Error('Not enough money'))
         }
 
         try {
@@ -134,37 +141,32 @@ class App extends EventEmitter {
                 }, { transaction: t })
 
                 shareParams.user.amount -= total
-                try
-                {
+                try {
                     await shareParams.user.save({ transaction: t })
                 }
-                catch (err)
-                {
-                    return callback(Error('Server error'))
+                catch (err) {
+                    return callback(new Error('Server error'))
                 }
             })
             callback(null, result)
         }
         catch (err) {
-            callback(Error('Server error'))
+            callback(new Error('Server error'))
         }
     }
 
-    async history(params, callback)
-    {
-        if (typeof (params?.user) === 'undefined')
-        {
-            return callback(Error('Invalid params'))
+    async history(params, callback) {
+        if (typeof (params?.user) === 'undefined') {
+            return callback(new Error('Invalid params'))
         }
 
         const Transaction = this.db.models.Transaction
         const Symbol = this.db.models.Symbol
-        try{
-            const res = await Transaction.findAll({where: {userId: params.user.id}, include: [Symbol]})
+        try {
+            const res = await Transaction.findAll({ where: { userId: params.user.id }, include: [Symbol] })
             callback(null, res)
         }
-        catch (err)
-        {
+        catch (err) {
             callback(err)
         }
     }
