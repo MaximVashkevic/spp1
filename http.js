@@ -23,7 +23,6 @@ const mainRouter = require("./routers/mainRouter");
   server.use(clearMessagesMiddleware);
   server.use(authorizationMiddleware);
 
-  server.use("/", accountRouter);
   server.use("/", mainRouter);
   server.use("/stock", stockRouter);
 
