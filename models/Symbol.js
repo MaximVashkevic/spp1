@@ -12,6 +12,10 @@ class Symbol extends Model {
             symbol: {
                 type: DataTypes.STRING,
                 allowNull: false,
+            },
+            companyName: {
+                type: DataTypes.STRING,
+                allowNull: false
             }
         }, {
             sequelize: connection,

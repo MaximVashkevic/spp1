@@ -6,7 +6,7 @@ const { IEXCloudClient } = require("node-iex-cloud");
 const fetch = require("node-fetch");
 const symbolService = require("./services/symbolService")
 
-const {register, logIn} = require('./services/userService')
+const {register, logIn, currentCash} = require('./services/userService')
 
 const config = require('./config');
 const { buy, lookup, history } = require("./services/stockService");
@@ -80,5 +80,6 @@ App.prototype.logIn = logIn
 App.prototype.buy = buy
 App.prototype.lookup = lookup
 App.prototype.history = history
+App.prototype.currentCash = currentCash
 
 module.exports = App.start(config)

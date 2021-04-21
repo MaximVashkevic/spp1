@@ -1,3 +1,4 @@
+const User = require("../models/User");
 const BuyValidator = require("../validators/buyValidator");
 async function buy(shareParams) {
   const db = this.db;
@@ -15,11 +16,13 @@ async function buy(shareParams) {
     throw new Error("Not enough money");
   }
 
+  const companyName = await getCompanyName(this.iex, shareParams.symbol)
+
   try {
     const result = await db.transaction(async (t) => {
       const [symbol, _] = await SymbolModel.findOrCreate({
         where: { symbol: shareParams.symbol },
-        defaults: { symbol: shareParams.symbol },
+        defaults: { symbol: shareParams.symbol, companyName  },
         transaction: t,
       });
 
@@ -33,9 +36,12 @@ async function buy(shareParams) {
         { transaction: t }
       );
 
-      shareParams.user.amount -= total;
       try {
-        await shareParams.user.save({ transaction: t });
+          await User.findOne( {where: {id: shareParams.user.id}})
+          .then(user => {
+              user.amount -= total
+              return user.save({ transaction: t })
+            })
       } catch (err) {
         throw new Error("Server error");
       }
@@ -48,13 +54,25 @@ async function buy(shareParams) {
 
 async function lookup(symbol) {
   try {
-    return await this.iex.symbol(symbol);
-  } catch {
+    return await this.iex.symbol(symbol).price();
+  } catch (err) {
+      console.log(err)
     throw new Error("Invalid symbol");
   }
 }
 
-async function history(params, callback) {
+async function getCompanyName(iex, symbol) {
+    try {
+        const info = await iex.symbol(symbol).company()
+      return info.companyName;
+    } catch (err) {
+        console.log(err)    
+      throw new Error("Invalid symbol" + symbol);
+    }
+  }
+
+
+async function history(params) {
     if (typeof params?.user === "undefined") {
       throw new Error("Invalid params");
     }

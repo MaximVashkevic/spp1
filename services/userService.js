@@ -57,4 +57,13 @@ async function logIn(userParams) {
     throw new Error("Invalid login or password");
 }
 
-module.exports = { register, logIn }
+async function currentCash(userParams) {
+    const User = this.db.models.User;
+    const user = await User.findOne({where: {id: userParams.id} });
+    if (user) {
+        return user.amount
+    }
+    throw new Error("Can't get current cash")
+}
+
+module.exports = { register, logIn, currentCash }

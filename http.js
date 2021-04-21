@@ -5,7 +5,6 @@ const session = require("express-session");
 const clearMessagesMiddleware = require("./middlewares/clearMessagesMiddleware");
 const authorizationMiddleware = require("./middlewares/authorizationMiddleware");
 
-const accountRouter = require("./routers/accountRouter");
 const stockRouter = require("./routers/stockRouter");
 const mainRouter = require("./routers/mainRouter");
 

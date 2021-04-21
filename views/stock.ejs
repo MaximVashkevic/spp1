@@ -32,15 +32,17 @@
     </ul>
     <div class="tab-content">
       <div id="buy" class="tab-pane fade in active">
-        <form action="/buy" method="POST">
+        <form action="/stock/buy" method="POST">
           <div class="input-group">
             <input
               type="number"
               min="0"
               id="amount"
+              name="amount"
               class="form-control"
               placeholder="Amount"
             />
+            <input type="hidden" id="symbol" name="symbol" value="<%= symbolData.symbol %>">
             <div class="input-group-btn">
               <button class="btn btn-default" type="submit">Buy</button>
             </div>
@@ -48,15 +50,17 @@
         </form>
       </div>
       <div id="sell" class="tab-pane fade">
-        <form action="/sell" method="POST">
+        <form action="/stock/sell" method="POST">
           <div class="input-group">
             <input
               type="number"
               min="0"
+              name="amount"
               id="amount"
               class="form-control"
               placeholder="Amount"
             />
+            <input type="hidden" id="symbol" name="symbol" value="<%= symbolData.symbol %>">
             <div class="input-group-btn">
               <button class="btn btn-default" type="submit">Sell</button>
             </div>
