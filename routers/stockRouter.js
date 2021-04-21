@@ -31,7 +31,22 @@ stockRouter.post("/buy", async (req, res) => {
     addMessage(req, 'success', 'Shares bought successfully')
   })
   .catch(err => {
-    addMessage(req, 'error', "Can't bur shares")
+    addMessage(req, 'error', "Can't buy shares")
+  })
+  .finally(() => {
+    res.redirect("/")
+  })
+})
+
+stockRouter.post("/sell", async (req, res) => {
+  const symbol = req.body.symbol;
+  const amount = req.body.amount;
+  await app.then((app) => app.sell({symbol, amount, user: req.session.userID}))
+  .then(result => {
+    addMessage(req, 'success', 'Shares sold successfully')
+  })
+  .catch(err => {
+    addMessage(req, 'error', "Can't sell shares")
   })
   .finally(() => {
     res.redirect("/")

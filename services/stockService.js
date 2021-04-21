@@ -1,11 +1,12 @@
 const User = require("../models/User");
-const BuyValidator = require("../validators/buyValidator");
+const ValidationError = require("../validationError");
+const TransactionValidator = require("../validators/transactionValidator");
 async function buy(shareParams) {
   const db = this.db;
   const TransactionModel = db.models.Transaction;
   const SymbolModel = db.models.Symbol;
-  const buyValidator = BuyValidator(shareParams);
-  if (!buyValidator.passes()) {
+  const transactionValidator = TransactionValidator(shareParams);
+  if (!transactionValidator.passes()) {
     throw new Error("Invalid symbol or amount of shares");
   }
 
@@ -52,6 +53,45 @@ async function buy(shareParams) {
   }
 }
 
+async function sell(shareParams) {
+  const db = this.db;
+  const TransactionModel = db.models.Transaction;
+  const SymbolModel = db.models.Symbol;
+  const transactionValidator = TransactionValidator(shareParams);
+  if (!transactionValidator.passes()) {
+    throw new Error("Invalid symbol or amount of shares");
+  }
+
+  const symbolPrice = await this.lookup(shareParams.symbol);
+  const total = symbolPrice * shareParams.amount;
+
+  try {
+    const result = await db.transaction(async (t) => {
+      await SymbolModel.findOne({where: {symbol: shareParams.symbol}})
+      .then(async symbol => {
+        const totalShares = await TransactionModel.sum('shares', {where: {symbolId: symbol.id}});
+        if (totalShares < shareParams.amount) {
+          throw new ValidationError(["Not enough shares"])
+        }
+        await TransactionModel.create(
+          {
+            userId: shareParams.user.id,
+            symbolId: symbol.id,
+            shares: -shareParams.amount,
+            price: symbolPrice,
+          },
+          { transaction: t }
+        )
+      })
+    })
+    return result
+  }
+  catch (err) {
+    console.log(err)
+    throw new Error("Can't sell shares");
+  }
+}
+
 async function lookup(symbol) {
   try {
     return await this.iex.symbol(symbol).price();
@@ -71,6 +111,40 @@ async function getCompanyName(iex, symbol) {
     }
   }
 
+async function info(params) {
+  if (typeof params?.user === "undefined") {
+    throw new Error("Invalid params");
+  }
+  const Transaction = this.db.models.Transaction;
+  const Symbol = this.db.models.Symbol;
+  const sequelize = this.db.queryInterface.sequelize;
+
+  try {
+    return await Transaction.findAll({
+      where: {userId: params.user.id},
+      include: [Symbol],
+      group: ['symbolId'],
+      attributes: { include: [[sequelize.fn('sum', sequelize.col('shares')), 'sharessum']]}
+    })
+    .then(res => {
+      return res.map(transaction => {
+        console.log(transaction)
+        return {
+          shares: transaction.get('sharessum'),
+          symbol: transaction.Symbol.symbol,
+          name: transaction.Symbol.companyName,
+          price: transaction.price.toFixed(2),
+          total: (transaction.price * transaction.get('sharessum')).toFixed(2)
+        }
+      })
+    })
+  }
+  catch (err) {
+    console.log(err)
+    throw new Error("Can't get info")
+  }
+}
+
 
 async function history(params) {
     if (typeof params?.user === "undefined") {
@@ -89,4 +163,4 @@ async function history(params) {
     }
   }
 
-module.exports = { buy, lookup, history };
+module.exports = { buy, lookup, history, sell, info };

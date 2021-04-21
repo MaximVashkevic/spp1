@@ -9,7 +9,7 @@ const symbolService = require("./services/symbolService")
 const {register, logIn, currentCash} = require('./services/userService')
 
 const config = require('./config');
-const { buy, lookup, history } = require("./services/stockService");
+const { buy, lookup, history, sell, info } = require("./services/stockService");
 
 class App {
   db = null;
@@ -78,8 +78,10 @@ class App {
 App.prototype.register = register
 App.prototype.logIn = logIn
 App.prototype.buy = buy
+App.prototype.sell = sell
 App.prototype.lookup = lookup
 App.prototype.history = history
 App.prototype.currentCash = currentCash
+App.prototype.info = info
 
 module.exports = App.start(config)
