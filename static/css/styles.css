@@ -1,21 +1,68 @@
-.container
-{
-    /* center contents */
-    margin-left: auto;
-    margin-right: auto;
+.container {
+  /* center contents */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#login, #register {
     text-align: center;
 }
 
-.alert
-{
-    padding: 6px 12px
+.alert {
+  padding: 6px 12px;
 }
 
-main .form-control
-{
-    /* center form controls */
-    display: inline-block;
+.search-result {
+  padding: 10px;
+}
 
-    /* override Bootstrap's 100% width for form controls */
-    width: auto;
+.search-result h1 {
+  color: black !important;
+}
+
+.search-result p {
+  color: gray !important;
+}
+
+#shares-forms {
+    margin: 20px 10px;
+}
+
+main .form-control {
+  /* center form controls */
+  display: inline-block;
+
+  /* override Bootstrap's 100% width for form controls */
+  width: auto;
+}
+
+#chart {
+  height: 300px !important;
+}
+
+#company-info {
+  padding: 15px;
+}
+
+.float-right {
+  float: right;
+}
+
+.comment-header p {
+  margin-bottom: 0;
+}
+
+.comment {
+  padding: 5px 10px;
+}
+
+textarea {
+  width: 100% !important;
+}
+
+#send-button {
+  width: 100%;
+}
+#comment-form {
+  margin-bottom: 20px;
 }

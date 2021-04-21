@@ -1,0 +1,30 @@
+<%- include('header'); -%>
+<div class="panel panel-default">
+  <div class="panel-heading">Current balance:</div>
+  <div class="panel-body"><%=accountInfo.total%></div>
+</div>
+<div class="panel panel-default">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Shares</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tboby>
+      <% for (const transaction of accountInfo.transactions) { %>
+      <tr>
+        <td><%=transaction["symbol"]%></td>
+        <td><%=transaction["name"]%></td>
+        <td><%=transaction["shares"]%></td>
+        <td><%=transaction["price"]%></td>
+        <td><%=transaction["total"]%></td>
+      </tr>
+      <% } %>
+    </tboby>
+  </table>
+</div>
+<%- include('footer'); -%>

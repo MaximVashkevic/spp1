@@ -1,0 +1,129 @@
+<%- include('header'); -%>
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default same" id="company-info">
+      <h1 class="display-2"><%=symbolData.symbol%></h1>
+      <p class="text-secondary"><%=symbolData.companyName%></p>
+      <h1 class="display-1 <%=(symbolData.isUp?'text-success':'text-danger')%>">
+        <%=symbolData.price%>
+      </h1>
+
+      <div class="panel-footer">
+        <p class="text-secondary">Total cash: <%=symbolData.totalCash%></p>
+        <p class="text-secondary">Total debt: <%=symbolData.totalDebt%></p>
+        <p class="text-secondary">
+          Operating cash flow: <%=symbolData.operatingCash%>
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="panel panel-default same" id="chart-parent">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+</div>
+<div class="panel panel-default same">
+  <div id="shares-forms">
+    <h1 class="display-2">Your shares: <%= symbolData.shares %></h1>
+    <ul class="nav nav-tabs">
+      <li class="active"><a data-toggle="tab" href="#buy">Buy</a></li>
+      <li><a data-toggle="tab" href="#sell">Sell</a></li>
+    </ul>
+    <div class="tab-content">
+      <div id="buy" class="tab-pane fade in active">
+        <form action="/buy" method="POST">
+          <div class="input-group">
+            <input
+              type="number"
+              min="0"
+              id="amount"
+              class="form-control"
+              placeholder="Amount"
+            />
+            <div class="input-group-btn">
+              <button class="btn btn-default" type="submit">Buy</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div id="sell" class="tab-pane fade">
+        <form action="/sell" method="POST">
+          <div class="input-group">
+            <input
+              type="number"
+              min="0"
+              id="amount"
+              class="form-control"
+              placeholder="Amount"
+            />
+            <div class="input-group-btn">
+              <button class="btn btn-default" type="submit">Sell</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<form action="/comment" method="POST">
+  <div id="comment-form">
+    <div class="row">
+      <div class="col-xs-12">
+        <textarea class="form-control"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-9"></div>
+      <div class="col-xs-3">
+        <button class="btn btn-primary" id="send-button">Send comment</button>
+      </div>
+    </div>
+  </div>
+</form>
+<% if (comments) { %>
+<div>
+  <% for(let comment of comments) { %>
+  <div class="panel panel-default">
+    <div class="panel-heading comment-header">
+      <div class="row">
+        <div class="col-xs-8 text-left">
+          <p class="display-4"><%= comment.author %></p>
+        </div>
+        <div class="col-xs-4 text-right">
+          <p class="text-secodary"><%= comment.time %></p>
+        </div>
+      </div>
+    </div>
+    <p class="comment"><%= comment.text %></p>
+  </div>
+  <% } %>
+</div>
+<% } %>
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.1/dist/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+<script src="https://www.chartjs.org/chartjs-chart-financial/chartjs-chart-financial.js"></script>
+<script>
+          var barCount = 30;
+          var initialDateStr = "<%=chartData.initialDate%>";
+
+          var ctx = document.getElementById('chart').getContext('2d');
+          ctx.canvas.width = 600;
+          ctx.canvas.height = 400;
+          var chart = new Chart(ctx, {
+              type: 'candlestick',
+              data: {
+                  datasets: [{
+  			        label: '',
+                    data: <%-JSON.stringify(chartData.data)%>
+                    }]
+  	            },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                  }
+
+  });
+</script>
+<%- include('footer'); -%>
