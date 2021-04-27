@@ -5,5 +5,11 @@ module.exports = {
   },
   addMessage(req, type, text) {
     req.session.messages.push({ type, text });
+  },
+  messageTypes: {
+    SUCCESS: 'success',
+    INFO: 'info',
+    WARNING: 'warning',
+    DANGER: 'danger'
   }
 };

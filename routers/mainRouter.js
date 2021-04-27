@@ -3,7 +3,7 @@ const render = require("../helpers/renderHelper");
 const bodyParser = require("body-parser");
 const app = require("../app");
 const ValidationError = require("../validationError");
-const { addMessage } = require("../helpers/popupMessageHelper");
+const { addMessage, messageTypes } = require("../helpers/popupMessageHelper");
 
 const router = new Router();
 
@@ -49,7 +49,7 @@ router.post("/login", async (req, res) => {
       res.redirect("/");
     })
     .catch((err) => {
-      addMessage(req, "danger", err.message);
+      addMessage(req, messageTypes.DANGER, err.message);
       renderLogin(req, res);
     });
 });
@@ -77,17 +77,17 @@ router.post("/register", urlencodedParser, async (req, res) => {
       })
     )
     .then((result) => {
-      addMessage(req, "success", "User created.");
+      addMessage(req, messageTypes.SUCCESS, "User created.");
       req.session.save();
       res.redirect("/login");
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
         for (const message of err.messages) {
-          addMessage(req, "danger", message);
+          addMessage(req, messageTypes.DANGER, message);
         }
       } else {
-        addMessage(req, "danger", err.message);
+        addMessage(req, messageTypes.DANGER, err.message);
       }
       renderRegister(req, res);
     });
