@@ -61,10 +61,15 @@ async function getSharesCount(symbol, userId) {
   return await SymbolModel.findOne({
     where: { symbol: symbol },
   }).then(async (symbol) => {
-
-    return symbol ? (await TransactionModel.sum("shares", {
-      where: { symbolId: symbol.id, userId: userId },
-    })) : 0;
+    if (symbol) {
+      const shares = await TransactionModel.sum("shares", {
+        where: { symbolId: symbol.id, userId: userId },
+      });
+      if (Number.isFinite(shares)) {
+          return shares;
+      }
+    }
+    return 0;
   });
 }
 
