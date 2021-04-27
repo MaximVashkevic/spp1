@@ -63,9 +63,9 @@ class App {
   async getGraphData(symbol) {
     const iexChartResult = await this.iex
       .symbol(symbol)
-      .chart("dynamic", { chartCloseOnly: true });
+      .chart("1m");
     return {
-      data: iexChartResult.data.map((item) => {
+      data: iexChartResult.map((item) => {
         return {
           x: new Date(item.date).valueOf(),
           o: item.open,
