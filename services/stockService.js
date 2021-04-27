@@ -83,7 +83,8 @@ async function sell(shareParams) {
   }
 
   const symbolPrice = await this.lookup(shareParams.symbol);
-
+  const total = symbolPrice * shareParams.amount;
+  
   try {
     const result = await db.transaction(async (t) => {
       await SymbolModel.findOne({
@@ -104,6 +105,16 @@ async function sell(shareParams) {
           },
           { transaction: t }
         );
+        try {
+            await User.findOne({ where: { id: shareParams.user.id } }).then(
+              (user) => {
+                user.amount += total;
+                return user.save({ transaction: t });
+              }
+            );
+          } catch (err) {
+            throw new Error("Server error");
+          }
       });
     });
     return result;
@@ -149,7 +160,6 @@ async function info(params) {
       },
     }).then((res) => {
       return res.map((transaction) => {
-        console.log(transaction);
         return {
           shares: transaction.get("sharessum"),
           symbol: transaction.Symbol.symbol,
@@ -157,7 +167,7 @@ async function info(params) {
           price: transaction.price.toFixed(2),
           total: (transaction.price * transaction.get("sharessum")).toFixed(2),
         };
-      });
+      }).filter(value => value.shares > 0);
     });
   } catch (err) {
     console.log(err);

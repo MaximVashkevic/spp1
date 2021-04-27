@@ -108,13 +108,12 @@ class App {
         .batchSymbols(symbols)
         .batch()
         .price()
-        // .company()
+        .company()
         .range("1m", iexSearchQueryResults.length);
       const results = iexSearchQueryResults.map((resultItem) => {
         const symbol = resultItem.symbol;
         const price = batchResults[symbol].price;
-        const name = resultItem.securityName;
-        // const name = batchResults[symbol].company.companyName;  // contains name not for all companies
+        const name = batchResults[symbol].company.companyName ?? resultItem.securityName;  // contains name not for all companies
         return {
           symbol: symbol,
           name: name,
