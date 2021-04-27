@@ -1,15 +1,21 @@
-const { Sequelize, Transaction } = require("sequelize");
+const { Sequelize } = require("sequelize");
 const SymbolModel = require("./models/Symbol");
 const UserModel = require("./models/User");
 const TransactionModel = require("./models/Transaction");
 const { IEXCloudClient } = require("node-iex-cloud");
 const fetch = require("node-fetch");
-const symbolService = require("./services/symbolService");
 
 const { register, logIn, currentCash } = require("./services/userService");
 
 const config = require("./config");
-const { buy, lookup, history, sell, info } = require("./services/stockService");
+const {
+  buy,
+  lookup,
+  history,
+  sell,
+  info,
+  getSharesCount,
+} = require("./services/stockService");
 
 class App {
   db = null;
@@ -46,11 +52,48 @@ class App {
     })();
   }
 
-  getStockInfo(symbol) {
+  async getStockInfo(symbol, userID) {
     return {
-      symbolData: symbolService.getStockInfo(symbol),
-      comments: symbolService.getComments(symbol),
-      chartData: symbolService.getGraphData(symbol),
+      symbolData: await this.getStockCommonInfo(symbol),
+      chartData: await this.getGraphData(symbol),
+      userShares: await this.getSharesCount(symbol, userID.id),
+    };
+  }
+
+  async getGraphData(symbol) {
+    const iexChartResult = await this.iex
+      .symbol(symbol)
+      .chart("dynamic", { chartCloseOnly: true });
+    return {
+      data: iexChartResult.data.map((item) => {
+        return {
+          x: new Date(item.date).valueOf(),
+          o: item.open,
+          h: item.high,
+          l: item.low,
+          c: item.close,
+        };
+      }),
+    };
+  }
+
+  async getStockCommonInfo(symbol) {
+    const iexResults = await this.iex
+      .symbol(symbol)
+      .batch()
+      .quote()
+      .stats()
+      .range("1m");
+    console.log(iexResults);
+    const isUp = iexResults.quote.change >= 0;
+    return {
+      symbol: iexResults.quote.symbol,
+      companyName: iexResults.quote.companyName,
+      isUp: isUp,
+      price: iexResults.quote.latestPrice,
+      marketCapitalization: iexResults.stats.marketcap,
+      week52high: iexResults.stats.week52high,
+      week52low: iexResults.stats.week52low,
     };
   }
 
@@ -98,5 +141,6 @@ App.prototype.lookup = lookup;
 App.prototype.history = history;
 App.prototype.currentCash = currentCash;
 App.prototype.info = info;
+App.prototype.getSharesCount = getSharesCount;
 
 module.exports = App.start(config);

@@ -54,6 +54,20 @@ async function buy(shareParams) {
   }
 }
 
+async function getSharesCount(symbol, userId) {
+  const SymbolModel = this.db.models.Symbol;
+  const TransactionModel = this.db.models.Transaction;
+
+  return await SymbolModel.findOne({
+    where: { symbol: symbol },
+  }).then(async (symbol) => {
+
+    return symbol ? (await TransactionModel.sum("shares", {
+      where: { symbolId: symbol.id, userId: userId },
+    })) : 0;
+  });
+}
+
 async function sell(shareParams) {
   const db = this.db;
   const TransactionModel = db.models.Transaction;
@@ -64,7 +78,6 @@ async function sell(shareParams) {
   }
 
   const symbolPrice = await this.lookup(shareParams.symbol);
-  const total = symbolPrice * shareParams.amount;
 
   try {
     const result = await db.transaction(async (t) => {
@@ -164,4 +177,4 @@ async function history(params) {
   }
 }
 
-module.exports = { buy, lookup, history, sell, info };
+module.exports = { buy, lookup, history, sell, info, getSharesCount };
