@@ -9,10 +9,9 @@
       </h1>
 
       <div class="panel-footer">
-        <p class="text-secondary">Total cash: <%=symbolData.totalCash%></p>
-        <p class="text-secondary">Total debt: <%=symbolData.totalDebt%></p>
-        <p class="text-secondary">
-          Operating cash flow: <%=symbolData.operatingCash%>
+        <p class="text-secondary">Market capitalization: <%=symbolData.marketCapitalization%></p>
+        <p class="text-secondary">52 Weeks low: <%=symbolData.week52high%></p>
+        <p class="text-secondary">52 weeks high: <%=symbolData.week52low%>
         </p>
       </div>
     </div>
@@ -25,10 +24,12 @@
 </div>
 <div class="panel panel-default same">
   <div id="shares-forms">
-    <h1 class="display-2">Your shares: <%= symbolData.shares %></h1>
+    <h1 class="display-2">Your shares: <%= userShares %></h1>
     <ul class="nav nav-tabs">
       <li class="active"><a data-toggle="tab" href="#buy">Buy</a></li>
-      <li><a data-toggle="tab" href="#sell">Sell</a></li>
+      <li  <% if (userShares === 0) { %> class="disabled" <% } %> >
+        <a <% if (userShares !== 0) { %> data-toggle="tab" <% } %>
+         href="#sell">Sell</a></li>
     </ul>
     <div class="tab-content">
       <div id="buy" class="tab-pane fade in active">
@@ -55,6 +56,7 @@
             <input
               type="number"
               min="0"
+              max="<%= userShares %>"
               name="amount"
               id="amount"
               class="form-control"
@@ -70,47 +72,12 @@
     </div>
   </div>
 </div>
-<form action="/comment" method="POST">
-  <div id="comment-form">
-    <div class="row">
-      <div class="col-xs-12">
-        <textarea class="form-control"></textarea>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-xs-9"></div>
-      <div class="col-xs-3">
-        <button class="btn btn-primary" id="send-button">Send comment</button>
-      </div>
-    </div>
-  </div>
-</form>
-<% if (comments) { %>
-<div>
-  <% for(let comment of comments) { %>
-  <div class="panel panel-default">
-    <div class="panel-heading comment-header">
-      <div class="row">
-        <div class="col-xs-8 text-left">
-          <p class="display-4"><%= comment.author %></p>
-        </div>
-        <div class="col-xs-4 text-right">
-          <p class="text-secodary"><%= comment.time %></p>
-        </div>
-      </div>
-    </div>
-    <p class="comment"><%= comment.text %></p>
-  </div>
-  <% } %>
-</div>
-<% } %>
 <script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.1/dist/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
 <script src="https://www.chartjs.org/chartjs-chart-financial/chartjs-chart-financial.js"></script>
 <script>
           var barCount = 30;
-          var initialDateStr = "<%=chartData.initialDate%>";
 
           var ctx = document.getElementById('chart').getContext('2d');
           ctx.canvas.width = 600;
